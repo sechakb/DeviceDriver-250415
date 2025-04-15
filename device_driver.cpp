@@ -1,14 +1,6 @@
 #include "device_driver.h"
-#include <stdexcept>
 
 #define REPEAT (4)
-
-class ReadFailException : public std::exception
-{ 
-public:
-    using _Mybase = std::exception;
-    explicit ReadFailException(const char* _Message) : _Mybase(_Message) {}
-};
 
 DeviceDriver::DeviceDriver(FlashMemoryDevice *hardware) : m_hardware(hardware)
 {}
