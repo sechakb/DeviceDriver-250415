@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 #include "device_driver.h"
 #include "mock_flash.h"
+#include "app.h"
 #include <string>
 
 using std::string;
@@ -22,6 +23,16 @@ public:
 
     MockFlash stMockFlash;
     DeviceDriver stDeviceDriver { &stMockFlash };
+};
+
+class ApplicationTest : public DeviceDriverTest
+{
+protected:
+    // void SetUp() override
+    // {
+    // }
+public:
+    Application stApplication { &stDeviceDriver };
 };
 
 TEST_F(DeviceDriverTest, ReadFromHWSuccess)
@@ -80,4 +91,32 @@ TEST_F(DeviceDriverTest, WriteFail)
         EXPECT_EQ(string{ e.what() }, string{ "Data already exists" });
     }
     
+}
+
+TEST_F(ApplicationTest, ReadAndPrintSuccess)
+{
+    vector<int> expected;
+    for (int i=0; i<=4; i++)
+    {
+        EXPECT_CALL(stMockFlash, read(i))
+            .Times(5)
+            .WillRepeatedly(testing::Return(i));
+        expected.push_back(i);
+    }
+
+    EXPECT_THAT(expected, stApplication.ReadAndPrint(0, 4));
+}
+
+TEST_F(ApplicationTest, WriteAllSuccess)
+{
+    for (int i=0; i<=4; i++)
+    {
+        EXPECT_CALL(stMockFlash, read(i))
+            .Times(1)
+            .WillRepeatedly(testing::Return(INVALID_DATA));
+        EXPECT_CALL(stMockFlash, write(i, NORMAL_DATA1))
+            .Times(1);
+    }
+
+    stApplication.WriteAll(NORMAL_DATA1);
 }
