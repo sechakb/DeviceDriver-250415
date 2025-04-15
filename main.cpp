@@ -20,47 +20,64 @@ protected:
 public:
     const long ADDRESS = 0xFF;
 
-    MockFlash stNormalFlash;
-    MockFlash stBadFlash;
-    DeviceDriver stDeviceDriver { nullptr };
-
-    void SetupNormal()
-    {
-        EXPECT_CALL(stNormalFlash, read(ADDRESS))
-            .Times(5)
-            .WillRepeatedly(testing::Return(0));
-    }
-
-    void SetupBad()
-    {
-        EXPECT_CALL(stBadFlash, read(ADDRESS))
-            .WillOnce(testing::Return(0))
-            .WillOnce(testing::Return(0))
-            .WillRepeatedly(testing::Return(1));
-    }
+    MockFlash stMockFlash;
+    DeviceDriver stDeviceDriver { &stMockFlash };
 };
 
 TEST_F(DeviceDriverTest, ReadFromHWSuccess)
 {
-    stDeviceDriver.SetDeviceDriver(&stNormalFlash);
-    SetupNormal();
+    EXPECT_CALL(stMockFlash, read(ADDRESS))
+        .Times(5)
+        .WillRepeatedly(testing::Return(NORMAL_DATA1));
 
     int data = stDeviceDriver.read(ADDRESS);
-    EXPECT_EQ(0, data);
+    EXPECT_EQ(NORMAL_DATA1, data);
 }
 
 TEST_F(DeviceDriverTest, ReadFromHWFail)
 {
-    stDeviceDriver.SetDeviceDriver(&stBadFlash);
-    SetupBad();
+    EXPECT_CALL(stMockFlash, read(ADDRESS))
+        .WillOnce(testing::Return(NORMAL_DATA1))
+        .WillOnce(testing::Return(NORMAL_DATA1))
+        .WillRepeatedly(testing::Return(NORMAL_DATA2));
 
     try
     {
-        int data = stDeviceDriver.read(ADDRESS);
+        stDeviceDriver.read(ADDRESS);
         FAIL();
     }
     catch(const ReadFailException &e)
     {
         EXPECT_EQ(string{ e.what() }, string{ "Reliability read failed" });
     }
+}
+
+TEST_F(DeviceDriverTest, WriteSuccess)
+{
+    EXPECT_CALL(stMockFlash, read(ADDRESS))
+        .Times(1)
+        .WillRepeatedly(testing::Return(INVALID_DATA));
+    EXPECT_CALL(stMockFlash, write(ADDRESS, NORMAL_DATA1))
+        .Times(1);
+
+    stDeviceDriver.write(ADDRESS, NORMAL_DATA1);
+}
+
+TEST_F(DeviceDriverTest, WriteFail)
+{
+    EXPECT_CALL(stMockFlash, read(ADDRESS))
+        .Times(1)
+        .WillRepeatedly(testing::Return(NORMAL_DATA2));
+    EXPECT_CALL(stMockFlash, write(testing::_, testing::_))
+        .Times(0);
+
+    try
+    {
+        stDeviceDriver.write(ADDRESS, NORMAL_DATA1);
+    }
+    catch(const WriteFailException &e)
+    {
+        EXPECT_EQ(string{ e.what() }, string{ "Data already exists" });
+    }
+    
 }

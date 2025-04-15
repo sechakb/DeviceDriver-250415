@@ -7,7 +7,6 @@ DeviceDriver::DeviceDriver(FlashMemoryDevice *hardware) : m_hardware(hardware)
 
 int DeviceDriver::read(long address)
 {
-    // TODO: implement this method properly
     unsigned char ret = m_hardware->read(address);
     for (int i=0; i<REPEAT; i++)
     {
@@ -21,11 +20,9 @@ int DeviceDriver::read(long address)
 
 void DeviceDriver::write(long address, int data)
 {
-    // TODO: implement this method
+    if (m_hardware->read(address) != INVALID_DATA)
+    {
+        throw WriteFailException("Data already exists");
+    }
     m_hardware->write(address, (unsigned char)data);
-}
-
-void DeviceDriver::SetDeviceDriver(FlashMemoryDevice *hardware)
-{
-    m_hardware = hardware;
 }
