@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClInclude Include="device_driver.h" />
     <ClInclude Include="flash_memory_device.h" />
+    <ClInclude Include="mock_flash.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
