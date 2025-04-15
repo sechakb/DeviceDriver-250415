@@ -24,3 +24,8 @@ void DeviceDriver::write(long address, int data)
     // TODO: implement this method
     m_hardware->write(address, (unsigned char)data);
 }
+
+void DeviceDriver::SetDeviceDriver(FlashMemoryDevice *hardware)
+{
+    m_hardware = hardware;
+}

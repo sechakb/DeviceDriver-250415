@@ -11,30 +11,52 @@ int main()
     return RUN_ALL_TESTS();
 }
 
-TEST(DeviceDriver, ReadFromHWSuccess)
+class DeviceDriverTest : public testing::Test
 {
-    MockFlash stMockFlash;
-    EXPECT_CALL(stMockFlash, read(0xFF))
-        .Times(5)
-        .WillRepeatedly(testing::Return(0));
+protected:
+    // void SetUp() override
+    // {
+    // }
+public:
+    const long ADDRESS = 0xFF;
 
-    DeviceDriver driver{ &stMockFlash };
-    int data = driver.read(0xFF);
+    MockFlash stNormalFlash;
+    MockFlash stBadFlash;
+    DeviceDriver stDeviceDriver { nullptr };
+
+    void SetupNormal()
+    {
+        EXPECT_CALL(stNormalFlash, read(ADDRESS))
+            .Times(5)
+            .WillRepeatedly(testing::Return(0));
+    }
+
+    void SetupBad()
+    {
+        EXPECT_CALL(stBadFlash, read(ADDRESS))
+            .WillOnce(testing::Return(0))
+            .WillOnce(testing::Return(0))
+            .WillRepeatedly(testing::Return(1));
+    }
+};
+
+TEST_F(DeviceDriverTest, ReadFromHWSuccess)
+{
+    stDeviceDriver.SetDeviceDriver(&stNormalFlash);
+    SetupNormal();
+
+    int data = stDeviceDriver.read(ADDRESS);
     EXPECT_EQ(0, data);
 }
 
-TEST(DeviceDriver, ReadFromHWFail)
+TEST_F(DeviceDriverTest, ReadFromHWFail)
 {
-    MockFlash stMockFlash;
-    EXPECT_CALL(stMockFlash, read(0xEE))
-        .WillOnce(testing::Return(0))
-        .WillOnce(testing::Return(0))
-        .WillRepeatedly(testing::Return(1));
+    stDeviceDriver.SetDeviceDriver(&stBadFlash);
+    SetupBad();
 
     try
     {
-        DeviceDriver driver{ &stMockFlash };
-        int data = driver.read(0xEE);
+        int data = stDeviceDriver.read(ADDRESS);
         FAIL();
     }
     catch(const ReadFailException &e)

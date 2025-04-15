@@ -15,6 +15,7 @@ public:
     DeviceDriver(FlashMemoryDevice *hardware);
     int read(long address);
     void write(long address, int data);
+    void SetDeviceDriver(FlashMemoryDevice *hardware);
 
 protected:
     FlashMemoryDevice *m_hardware;
